@@ -70,12 +70,15 @@ class BehaviorLFADS(LFADS):
                 scale=self.cfg.TRAIN.L2.READIN_SCALE),
                 name='norm_layer'),
             ])
-
-            norm_param_path = path.join(self.cfg.TRAIN.DATA.DIR, 'normalization.h5')
-            f = h5py.File(norm_param_path, 'r')
-            bias = f['bias'][()]
-            mat = f['matrix'][()]
-            f.close()
+            try:
+                norm_param_path = path.join(self.cfg.TRAIN.DATA.DIR, 'normalization.h5')
+                f = h5py.File(norm_param_path, 'r')
+                bias = f['bias'][()]
+                mat = f['matrix'][()]
+                f.close()
+            except:
+                mat = None
+                bias = None
 
             if not self.from_existing:
                 self.load_matrix_to_lowd_readin(mat, bias=bias, freeze=True, norm_layer=True)
@@ -221,32 +224,34 @@ class BehaviorLFADS(LFADS):
 
         if norm_layer: 
             self.norm_layer.build(data_shape)
-            # assign weight matrix to essential kernel
-            self.norm_layer.weights[0].assign(matrix)
+            if matrix is not None:
+                # assign weight matrix to essential kernel
+                self.norm_layer.weights[0].assign(matrix)
 
-            # assign bias term (will always be one)
-            # we want to subtract the bias so multiply by negative 1
-            self.norm_layer.weights[1].assign(-1*bias)
+                # assign bias term (will always be one)
+                # we want to subtract the bias so multiply by negative 1
+                self.norm_layer.weights[1].assign(-1*bias)
 
-            # freeze all values 
-            if freeze: 
-                for v in self.norm_layer.trainable_variables: 
-                    v._trainable = False
+                # freeze all values 
+                if freeze: 
+                    for v in self.norm_layer.trainable_variables: 
+                        v._trainable = False
 
         else: # normal lowD readin matrix 
-            # assign the sequential kernel to hold the matrix as weights 
-            self.lowd_readin.weights[0].assign(matrix)
+            if matrix is not None:
+                # assign the sequential kernel to hold the matrix as weights 
+                self.lowd_readin.weights[0].assign(matrix)
 
-            # if a bias term is provided, assign this here 
-            if bias is not None: 
-                self.lowd_readin.weights[1].assign(bias)
-            
-            # freeze all assigned values values 
-            if freeze: 
-                self.lowd_readin.trainable_variables[0]._trainable = False
-                
+                # if a bias term is provided, assign this here 
                 if bias is not None: 
-                    self.lowd_readin.trainable_variables[1]._trainable = False
+                    self.lowd_readin.weights[1].assign(bias)
+                
+                # freeze all assigned values values 
+                if freeze: 
+                    self.lowd_readin.trainable_variables[0]._trainable = False
+                    
+                    if bias is not None: 
+                        self.lowd_readin.trainable_variables[1]._trainable = False
 
     def _step(self, batch):
         """ Performs a step of training or validation.
