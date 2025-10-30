@@ -49,7 +49,7 @@ def slide_window(data, window_size=30, window_step=6, limit=0):
     return window_data
 
 
-def get_data(filename, limit=0, window_size=30, window_step=6):
+def get_data(filename, limit=0, window_size=30, window_step=6, trial_limit=0):
     """
     Load and process electrophysiology data from lab data format
     
@@ -61,7 +61,10 @@ def get_data(filename, limit=0, window_size=30, window_step=6):
         bhv: Processed and windowed behavioral data
     """
     # Load lab data file
-    trial_file = glob(os.path.join(filename, '*.pth'))
+    if not trial_limit:
+        trial_file = glob(os.path.join(filename, '*.pth'))
+    else:
+        trial_file = glob(os.path.join(filename, '*.pth'))[:trial_limit]
     all_spikes = []
     all_bhv = []
     for trials in tqdm(trial_file):
@@ -82,8 +85,7 @@ def propress_data(file_name, output_file='propressed_data', limit=0, window_size
     label = file_name.split('/')[-1]  # Extract session label from filename
     
     # Load and process data
-    spike, bhv = get_data(file_name, limit=0, window_size=window_size, window_step=window_step)
-    
+    spike, bhv = get_data(file_name, limit=0, window_size=window_size, window_step=window_step, trial_limit=200)
     # Verify data consistency
     assert len(spike) == len(bhv)
     
@@ -122,7 +124,7 @@ def propress_data(file_name, output_file='propressed_data', limit=0, window_size
             h5file.create_dataset(key, data=value)
 
     # Load and process data
-    # spike, bhv = get_data(file_name, limit=limit, window_size=window_size, window_step=window_step)
+    spike, bhv = get_data(file_name, limit=50, window_size=window_size, window_step=window_step)
     
     # Create separate data structure for pickle output
     data = {}
@@ -139,9 +141,8 @@ def propress_data(file_name, output_file='propressed_data', limit=0, window_size
 
 if __name__ == "__main__":
     from glob import glob
-    # data_path = 'data/leibniz/20250711_rtt_001'
-    # file_names = glob(os.path.join(data_path, '*.pth'))
-    file_names = ['data/leibniz/20250711_rtt_001']
+    file_names = glob(os.path.join('data/leibniz', '2025071*'))
     from tqdm import tqdm
     for file_name in tqdm(file_names):
-        propress_data(file_name, output_file='Leibniz_propressed_data', limit=0, window_size=30, window_step=6, date_start='20250711')
+        print(f'================{file_name}=================')
+        propress_data(file_name, output_file='Leibniz_new_more_propressed_data', limit=0, window_size=30, window_step=6, date_start='20250711')

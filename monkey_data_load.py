@@ -167,10 +167,10 @@ def propress_data(data_path, file_name, output_file='propressed_data', limit=0, 
     
     # Create data dictionary for LFADS training
     data_dict = {
-        'train_behavior': train_bhv,
+        # 'train_behavior': train_bhv,
         'train_data': train_data,
         'train_inds': train_id,
-        'valid_behavior': val_bhv,
+        # 'valid_behavior': val_bhv,
         'valid_data': val_data,
         'valid_inds': val_id
     }
@@ -208,6 +208,7 @@ if __name__ == "__main__":
     data_path = 'data/Chewie_CO_2016'
 
     file_names = os.listdir(data_path)
+    file_names = ['Chewie_20161104_001.mat']
     from tqdm import tqdm
     for file_name in tqdm(file_names):
-        propress_data(data_path, file_name, output_file='C_propressed_data', limit=23, window_size=20, window_step=6, date_start='20160927')
+        propress_data(data_path, file_name, output_file='C_temp_propressed_data', limit=23, window_size=20, window_step=6, date_start='20160927')
